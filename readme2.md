@@ -23,7 +23,7 @@ graph TD
     subgraph LangGraphLayer [2. COGNITIVE ORCHESTRATION TIER: LangGraph Engine]
         StateObject[(Central Graph State<br/>raw_user_request + auth_context)]:::state
         GuardrailsNode[Step 5: Guardrails & Prompt Mgr<br/>- Scans for prompt injections<br/>- Appends corporate instructions]:::orchestrator
-        PlannerNode[Step 6: Dynamic Planner Node<br/>- Generates Pydantic DAG Plan<br/>Task 1: AWS Sandbox | Task 2: 75k Laptop]:::orchestrator
+        PlannerNode[Step 6: Dynamic Planner Node<br/>- Generates Pydantic DAG Plan<br/>Task 1: AWS Sandbox + Task 2: 75k Laptop]:::orchestrator
         DiscoveryNode[Step 7: Discovery Node<br/>- Reads Task: 'cloud_provisioning'<br/>- Resolves matching microservice endpoint]:::orchestrator
         DispatcherNode[Step 8: A2A Dispatcher Node<br/>- Builds Pydantic JSON-RPC 2.0 payload<br/>- Executes asynchronous network post]:::orchestrator
         ReflectionNode[Step 11: Reflection & Validation Node<br/>- Evaluates output text structures<br/>- Assesses cost/hardware safety thresholds]:::orchestrator
