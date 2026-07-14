@@ -1,13 +1,3 @@
-# Enterprise Service Operations Platform (`a2a-engine`)
-
-The Core Orchestrator Engine is a modular, production-grade enterprise platform designed to dynamically coordinate specialized AI agents to automate business requests across various corporate domains (IT, HR, Finance, Legal). 
-
-By leveraging **LangGraph state machines**, an **Agent-to-Agent (A2A) network layer**, and a **multi-tiered PostgreSQL memory ecosystem**, the architecture ensures that execution logic remains decoupled from specific agent code paths, enabling dynamic runtime scalability.
-
----
-
-## 🏗️ System Architecture
-
 ```mermaid
 graph TD
     %% Modern DevOps & AI Engineer Color Palette
@@ -18,59 +8,58 @@ graph TD
     classDef microservice fill:#E65100,stroke:#F57C00,stroke-width:2px,color:#FFF;
     classDef database fill:#4A148C,stroke:#6A1B9A,stroke-width:2px,color:#FFF;
 
-    %% Ingress Tier
-    Client[Customer Device / Browser]:::client -->|1. HTTPS Request + JWT Token| AuthFilter
+    %% Step 1: Client Ingress
+    Client[Step 1: Alex's Browser<br/>'Provision AWS Sandbox & order a 75k Laptop']:::client -->|HTTPS POST Request + Alex's JWT Token| AuthFilter
 
-    %% 1. Security Gateway Tier
+    %% 1. Security Gateway Tier (Steps 2-3)
     subgraph GatewayLayer [1. SECURITY & INGRESS TIER: FastAPI Gateway]
-        AuthFilter[Authentication Filter<br/>- Decodes JWT Claims<br/>- Validates Signature & 'exp']:::gateway -->|Verified Claims| RBACEngine[RBAC Enforcement Engine<br/>- Assesses Roles & Scopes<br/>- Enforces Permission Vectors]:::gateway
+        AuthFilter[Step 2: Authentication Filter<br/>- Decodes JWT Signature<br/>- Validates: usr_9921, AI_Eng]:::gateway -->|Valid Identity Claims| RBACEngine[Step 3: RBAC Enforcement Engine<br/>- Checks: execute:it_request<br/>- Checks: execute:finance_request]:::gateway
     end
 
-    %% Link Gateway to Central State
-    RBACEngine -->|2. Injects Validated Context| StateObject
+    %% Step 4: Link Gateway to Central State
+    RBACEngine -->|Step 4: Mounts profile to state| StateObject
 
-    %% 2. Cognitive Orchestration Layer (LangGraph ReAct Pipeline)
+    %% 2. Cognitive Orchestration Layer (Steps 5-8 & Step 11)
     subgraph LangGraphLayer [2. COGNITIVE ORCHESTRATION TIER: LangGraph Engine]
-        StateObject[(Central Graph State<br/>EnterpriseOrchestrationState)]:::state
-        GuardrailsNode[Guardrails & Prompt Mgr<br/>- Prompt Management Templates<br/>- Input Validation Filtering]:::orchestrator
-        PlannerNode[Dynamic Planner Node<br/>- Parses Intent via LLM<br/>- Builds Structured Pydantic DAG]:::orchestrator
-        DiscoveryNode[Discovery Node<br/>- Extracts Task Capabilities<br/>- Performs Live Registry Query]:::orchestrator
-        DispatcherNode[A2A Dispatcher Node<br/>- Packages Payloads into JSON-RPC 2.0<br/>- Network Execution Engine]:::orchestrator
-        ReflectionNode[Reflection & Validation Node<br/>- Quality Evaluation Spans<br/>- Inspects Output Formats & Conf]:::orchestrator
+        StateObject[(Central Graph State<br/>raw_user_request + auth_context)]:::state
+        GuardrailsNode[Step 5: Guardrails & Prompt Mgr<br/>- Scans for prompt injections<br/>- Appends corporate instructions]:::orchestrator
+        PlannerNode[Step 6: Dynamic Planner Node<br/>- Generates Pydantic DAG Plan<br/>Task 1: AWS Sandbox | Task 2: 75k Laptop]:::orchestrator
+        DiscoveryNode[Step 7: Discovery Node<br/>- Reads Task: 'cloud_provisioning'<br/>- Resolves matching microservice endpoint]:::orchestrator
+        DispatcherNode[Step 8: A2A Dispatcher Node<br/>- Builds Pydantic JSON-RPC 2.0 payload<br/>- Executes asynchronous network post]:::orchestrator
+        ReflectionNode[Step 11: Reflection & Validation Node<br/>- Evaluates output text structures<br/>- Assesses cost/hardware safety thresholds]:::orchestrator
         
-        %% Core Graph Control Flow Loops
+        %% Core Graph Control Flow Sequence
         StateObject --> GuardrailsNode
         GuardrailsNode --> PlannerNode
         PlannerNode --> DiscoveryNode
         DiscoveryNode --> DispatcherNode
         DispatcherNode --> ReflectionNode
         
-        ReflectionNode -->|Conditional Route: Verification Failed / Re-Plan Loop| PlannerNode
+        ReflectionNode -->|Conditional Route: Task Execution Failed / Loop Back to Fix Plan| PlannerNode
     end
 
-    %% 3. Distributed Microservices Tier
+    %% 3. Distributed Microservices Tier (Steps 9-10 Execution Core)
     subgraph MicroservicesLayer [3. DISTRIBUTED EXECUTION TIER: Plug-and-Play Microservices]
-        HRAgent[HR Agent Microservice<br/>Hosts: /.well-known/agent-card.json]:::microservice
-        ITAgent[IT Support Microservice<br/>Hosts: /.well-known/agent-card.json]:::microservice
-        FinAgent[Finance Agent Microservice<br/>Hosts: /.well-known/agent-card.json]:::microservice
+        HRAgent[HR Agent Microservice<br/>Inactive for this workflow]:::microservice
+        ITAgent[Step 9: IT Agent Microservice<br/>Provisions AWS Sandbox Container<br/>Returns Access Credentials]:::microservice
+        FinAgent[Step 10b: Finance Agent Microservice<br/>Executes purchase layer after<br/>manager authorization webhook clears]:::microservice
     end
 
-    %% Outbound A2A Dispatches
-    DispatcherNode -->|HTTP POST JSON-RPC 2.0| HRAgent
-    DispatcherNode -->|HTTP POST JSON-RPC 2.0| ITAgent
-    DispatcherNode -->|HTTP POST JSON-RPC 2.0| FinAgent
+    %% Outbound A2A Tool Dispatches
+    DispatcherNode -->|HTTP POST JSON-RPC: cloud_provisioning| ITAgent
+    DispatcherNode -->|HTTP POST JSON-RPC: hardware_procurement| FinAgent
 
     %% 4. Multi-Tier Data & Memory Infrastructure
     subgraph DataLayer [4. ENTERPRISE DATA TIER: Unified PostgreSQL Cluster]
-        DBCheckpoint[(Short-Term Memory<br/>- LangGraph PostgresSaver<br/>- Human-in-the-Loop Checkpoints)]:::database
-        DBRegistry[(Agent Registry Table<br/>- Tracks Capability Mappings<br/>- Stores Active JSON Schemas)]:::database
-        DBRAG[(Long-Term Memory<br/>- pgvector Knowledge Base<br/>- Profile Preferences & HNSW)]:::database
+        DBCheckpoint[(Step 10a: Short-Term Memory<br/>- Hits 75k laptop expense limit<br/>- PostgresSaver freezes compute footprint<br/>- Awaits Manager Webhook Signal)]:::database
+        DBRegistry[(Agent Capability Registry Table<br/>- Maps 'cloud_provisioning' to ITAgent URL<br/>- Validates Input/Output Pydantic Schemas)]:::database
+        DBRAG[(Long-Term Memory / RAG DB<br/>- pgvector Knowledge Base<br/>- Cross-references corporate laptop asset policies)]:::database
     end
 
     %% Balanced Structural Database Intersections
-    StateObject <===>|Atomic State Tracking| DBCheckpoint
-    DiscoveryNode ===>|Read Capability Index| DBRegistry
-    ReflectionNode ===>|Semantic Context Lookup| DBRAG
+    StateObject <===>|Durable State Snapshotting| DBCheckpoint
+    DiscoveryNode ===>|Capability Lookup Query| DBRegistry
+    ReflectionNode ===>|Semantic Policy Match via HNSW Index| DBRAG
 
-    %% Exit Strategy
-    ReflectionNode -->|Conditional Route: Verification Passed| EndNode([END: Secure JSON Response to Gateway]):::client
+    %% Step 12: Exit Strategy
+    ReflectionNode -->|Conditional Route: Both Tasks Success + Verification Passed| EndNode([Step 12: END - Secure JSON Response to Client<br/>AWS URLs + Purchase Order Success Details]):::client
